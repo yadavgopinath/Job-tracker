@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa; /* Light gray background */
+            color: #495057; /* Neutral text color */
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .btn {
+            font-size: 14px;
+            border-radius: 5px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-5">Company Details</h1>
+
+        <!-- Add New Company Form -->
+        <div class="card mb-4">
+            <div class="card-header text-center">Add New Company</div>
+            <div class="card-body">
+                <form id="company-form">
+                    <div class="mb-3">
+                        <label for="company-name" class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="company-name" placeholder="Enter company name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="company-info" class="form-label">Company Information</label>
+                        <textarea class="form-control" id="company-info" rows="3" placeholder="Enter company details" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Add Company</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Company List -->
+        <div class="card">
+            <div class="card-header text-center">Company List</div>
+            <div class="card-body">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Sr. No.</th>
+                            <th scope="col">Company Name</th>
+                            <th scope="col">Information</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="company-list">
+                        <!-- Dynamic rows will be appended here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const apiBaseUrl = 'http://localhost:5000';
+
+        // Load existing companies on page load
+        async function loadCompanies() {
+            try {
+                const userToken = localStorage.getItem('token');
+            const response = await axios.get(`http://localhost:3000/job/companies`, {
+headers: { 'Authorization': userToken }
+})
+                const companies = response.data;
+                const companyList = document.getElementById('company-list');
+                companyList.innerHTML = ''; // Clear existing rows
+                companies.forEach((company, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${company.company_name || 'N/A'}</td>
+                        <td>${company.company_info || 'N/A'}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCompany(${company.id})">Delete</button>
+                        </td>
+                    `;
+                    companyList.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                alert('Error loading companies');
+            }
+        }
+
+        // Handle new company form submission
+        document.getElementById('company-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newCompany = {
+                name: document.getElementById('company-name').value,
+                info: document.getElementById('company-info').value
+            };
+
+            try {
+                const userToken = localStorage.getItem('token');
+                axios.post("http://localhost:3000/job/companies",newCompany,{headers:{'Authorization':userToken}})
+                alert('Company added successfully!');
+                document.getElementById('company-form').reset();
+                loadCompanies(); // Refresh the company list
+            } catch (error) {
+                console.error(error);
+                alert('Error adding company');
+            }
+        });
+
+        // Delete company
+        async function deleteCompany(companyId) {
+            if (confirm('Are you sure you want to delete this company?')) {
+                try {
+                    const userToken = localStorage.getItem('token');
+                    axios.delete(`http://localhost:3000/job/companies/${companyId}`,{headers:{'Authorization':userToken}})
+                    alert('Company deleted successfully!');
+                    loadCompanies(); // Refresh the company list
+                } catch (error) {
+                    console.error(error);
+                    alert('Error deleting company');
+                }
+            }
+        }
+
+        // Load companies on page load
+        loadCompanies();
+    </script>
+</body>
+</html>
